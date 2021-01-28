@@ -4,11 +4,12 @@ RUN \
   echo "**** install packages ****" && \
     apk update && \
     apk add --no-cache \
-      curl
+      curl jq bc
 
 # copy local files
 COPY . /
 
 RUN chmod +x entrypoint.sh
+RUN mkdir -p /opt/vol
 
 ENTRYPOINT [ "/entrypoint.sh" ]
