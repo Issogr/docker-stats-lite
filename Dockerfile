@@ -9,6 +9,12 @@ RUN \
 # copy local files
 COPY . /
 
+ENV HW_MONITOR=true \
+  ENDPOINT_MONITOR=false \
+  WEBHOOK=false \
+  RAM_LIMIT=50 \
+  CPU_LIMIT=50
+
 RUN chmod +x entrypoint.sh
 RUN mkdir -p /opt/vol
 
