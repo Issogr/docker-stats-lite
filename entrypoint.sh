@@ -24,12 +24,36 @@ round() {
   echo $(printf %.$2f $(echo "scale=$2;(((10^$2)*$1)+0.5)/(10^$2)" | bc))
 }
 
+log() {
+  if [ "$WEBHOOK" = true ] && [ "$TRIGGER" = true ]; then
+    if [ -n "$WEBHOOK_URL" ] && [ -n "$WEBHOOK_TOKEN" ] && [ -n "$WEBHOOK_ORIGIN" ]; then
+      sendToWebHook "$MESSAGE"
+    else
+      echo -e "One of these variables is not correctly initialised: \nWEBHOOK_URL: $WEBHOOK_URL\nWEBHOOK_TOKEN: $WEBHOOK_TOKEN\nWEBHOOK_ORIGIN: $WEBHOOK_ORIGIN\n"
+    fi
+    echo -e "$MESSAGE"
+  elif [ "$TRIGGER" = true ]; then
+    echo -e "$MESSAGE"
+  fi
+}
+
+trigger_old_init() {
+  if [ "$TRIGGER_OLD" = false ] && [ "$1" = true ]; then
+    TRIGGER_OLD_TIMESTAMP=$(date +%s)
+  fi
+  TRIGGER_OLD=$1
+}
+
+#Init firt value of TRIGGER_OLD
+trigger_old_init false
+
 while true; do
+  TRIGGER=false
   if [ "$ENDPOINT_MONITOR" = true ]; then
     RESPONSE=$(curl --head --write-out '%{http_code}' --silent --output /dev/null "$ENDPOINT_URL")
     MESSAGE="🌐 ENDPOINT_STATUS: $RESPONSE\n"
     if [ "$RESPONSE" -gt 200 ]; then
-      ACTIVE=true
+      TRIGGER=true
     fi
   fi
   if [ "$HW_MONITOR" = true ]; then
@@ -38,18 +62,16 @@ while true; do
     CPU_RATE=$(jq '.cpu.rate_usage' < /opt/vol/stats.json)
     if [ "$(echo "$RAM_RATE > $RAM_LIMIT" | bc -l)" ] || [ "$(echo "$CPU_RATE > $CPU_LIMIT" | bc -l)" ]; then
       MESSAGE="$MESSAGE \n📈 RAM: $(round "$RAM_RATE" 2)\n📈 CPU: $(round "$CPU_RATE" 2)\n"
-      ACTIVE=true
+      TRIGGER=true
     fi
   fi
-  if [ "$WEBHOOK" = true ] && [ "$ACTIVE" = true ]; then
-    if [ -n "$WEBHOOK_URL" ] && [ -n "$WEBHOOK_TOKEN" ] && [ -n "$WEBHOOK_ORIGIN" ]; then
-      sendToWebHook "$MESSAGE"
-    else
-      echo -e "One of these variables is not correctly initialised: \nWEBHOOK_URL: $WEBHOOK_URL\nWEBHOOK_TOKEN: $WEBHOOK_TOKEN\nWEBHOOK_ORIGIN: $WEBHOOK_ORIGIN\n"
+  if [ "$TRIGGER" != "$TRIGGER_OLD" ]; then
+    trigger_old_init $TRIGGER
+    log
+  elif [ "$TRIGGER" = true ] && [ "$TRIGGER_OLD" = true ]; then
+    if [ $(( $(date +%s) - $TRIGGER_OLD_TIMESTAMP )) -gt $INTERVAL ]; then
+      log
     fi
-    echo -e "$MESSAGE"
-  elif [ "$ACTIVE" = true ]; then
-    echo -e "$MESSAGE"
   fi
   sleep 10
 done
