@@ -14,7 +14,7 @@ ENV HW_MONITOR=true \
   WEBHOOK=false \
   RAM_LIMIT=50 \
   CPU_LIMIT=50 \
-  INTERVAL=3600
+  INTERVAL=1800
 
 RUN chmod +x entrypoint.sh
 RUN mkdir -p /opt/vol

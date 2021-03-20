@@ -1,7 +1,13 @@
 #!/bin/sh
 
-if [ -z "$CONTAINER_ID" ]; then
-  echo -e "ERROR: CONTAINER_ID not specified\n"
+if [ ! "$(docker ps -q -f id="$CONTAINER_ID")" ] || [ -z "$CONTAINER_ID" ]; then
+  MESSAGE="ERROR: CONTAINER_ID invalid or not specified\n"
+  if [ "$WEBHOOK" = true ]; then
+    if [ -n "$WEBHOOK_URL" ] && [ -n "$WEBHOOK_TOKEN" ] && [ -n "$WEBHOOK_ORIGIN" ]; then
+      sendToWebHook "$MESSAGE"
+    fi
+    echo -e "$MESSAGE"
+  fi
   exit 1
 fi
 
@@ -25,27 +31,35 @@ round() {
 }
 
 log() {
-  if [ "$WEBHOOK" = true ] && [ "$TRIGGER" = true ]; then
+  if [ "$WEBHOOK" = true ]; then
     if [ -n "$WEBHOOK_URL" ] && [ -n "$WEBHOOK_TOKEN" ] && [ -n "$WEBHOOK_ORIGIN" ]; then
       sendToWebHook "$MESSAGE"
     else
       echo -e "One of these variables is not correctly initialised: \nWEBHOOK_URL: $WEBHOOK_URL\nWEBHOOK_TOKEN: $WEBHOOK_TOKEN\nWEBHOOK_ORIGIN: $WEBHOOK_ORIGIN\n"
     fi
-    echo -e "$MESSAGE"
-  elif [ "$TRIGGER" = true ]; then
-    echo -e "$MESSAGE"
   fi
+  echo -e "$MESSAGE"
 }
 
-trigger_old_init() {
-  if [ "$TRIGGER_OLD" = false ] && [ "$1" = true ]; then
-    TRIGGER_OLD_TIMESTAMP=$(date +%s)
-  fi
-  TRIGGER_OLD=$1
+actions_timestamp() {
+  case $1 in
+  "endpoint")
+    ENDPOINT_TRIGGER_TIMESTAMP=$(date +%s)
+    ;;
+  "hw")
+    HW_TRIGGER_TIMESTAMP=$(date +%s)
+    ;;
+  "log")
+    LOG_TRIGGER_TIMESTAMP=$(date +%s)
+    ;;
+  *)
+    echo "unknown"
+    ;;
+  esac
 }
 
-#Init firt value of TRIGGER_OLD
-trigger_old_init false
+#TRUE beacause of first run
+PRIORITY=true
 
 while true; do
   MESSAGE=""
@@ -55,6 +69,7 @@ while true; do
     MESSAGE="🌐 ENDPOINT STATUS: $RESPONSE"
     if [ "$RESPONSE" -gt 200 ]; then
       TRIGGER=true
+      actions_timestamp endpoint
     fi
   fi
   if [ "$HW_MONITOR" = true ]; then
@@ -64,15 +79,13 @@ while true; do
     if [ "$(echo "$RAM_RATE > $RAM_LIMIT" | bc -l)" = 1 ] || [ "$(echo "$CPU_RATE > $CPU_LIMIT" | bc -l)" = 1 ]; then
       MESSAGE="$MESSAGE \n📈 RAM: $(round "$RAM_RATE" 2)\n📈 CPU: $(round "$CPU_RATE" 2)\n"
       TRIGGER=true
+      actions_timestamp hw
     fi
   fi
-  if [ "$TRIGGER" != "$TRIGGER_OLD" ]; then
-    trigger_old_init $TRIGGER
+  if [ $TRIGGER = true ] && [ $PRIORITY = true ] || [ $TRIGGER = true ] && [ $(( $(date +%s) - $LOG_TRIGGER_TIMESTAMP )) -gt $INTERVAL ]; then
+    actions_timestamp log
     log
-  elif [ "$TRIGGER" = true ] && [ "$TRIGGER_OLD" = true ]; then
-    if [ $(( $(date +%s) - $TRIGGER_OLD_TIMESTAMP )) -gt $INTERVAL ]; then
-      log
-    fi
   fi
-  sleep 10
+  PRIORITY=false
+  sleep 15
 done
