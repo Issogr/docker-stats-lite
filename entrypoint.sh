@@ -1,7 +1,8 @@
 #!/bin/sh
 
-if [ ! "$(docker ps -q -f id="$CONTAINER_ID")" ] || [ -z "$CONTAINER_ID" ]; then
-  MESSAGE="ERROR: CONTAINER_ID invalid or not specified\n"
+CHECK_CONTAINER_ID=$(curl -s --unix-socket /var/run/docker.sock http://localhost/containers/$CONTAINER_ID/stats\?stream\=false | jq .message)
+if [[ $CHECK_CONTAINER_ID = *"No such container"* ]] || [ -z "$CHECK_CONTAINER_ID" ]; then
+  MESSAGE="ERROR: $CHECK_CONTAINER_ID\nCONTAINER_ID invalid or not specified\n"
   if [ "$WEBHOOK" = true ]; then
     if [ -n "$WEBHOOK_URL" ] && [ -n "$WEBHOOK_TOKEN" ] && [ -n "$WEBHOOK_ORIGIN" ]; then
       sendToWebHook "$MESSAGE"
