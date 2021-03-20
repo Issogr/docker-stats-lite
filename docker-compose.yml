@@ -3,9 +3,6 @@ services:
   app:
     build: .
     environment: 
-      - CONTAINER_ID=f61e66b1ceca
-      - RAM_LIMIT=0.1
-      - CPU_LIMIT=40
+      - CONTAINER_ID=<id>
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock"
-      - "./vol:/opt/vol"

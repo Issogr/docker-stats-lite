@@ -1,23 +1,21 @@
 # docker-stats-lite
 
-## Usage
-
-### Variables
+## Variables
 
 You can specify the following variables:
-* `CONTAINER_ID=<container id>` (f61e66b1ceca)
-* `HW_MONITOR=<enable hw monitoring>` (true|false) default: true
-* `ENDPOINT_MONITOR=<enable site endpoint monitoring>` (true|false) default: false
-* `WEBHOOK=<enable sending messages to webhooks>` (true|false) default: false
-* `RAM_LIMIT=` (number) default: 50
-* `CPU_LIMIT=` (number) default: 50
+* `CONTAINER_ID=<id>` **required**
+* `HW_MONITOR=<enable hw monitoring>` (true|false) **default: true**
+* `RAM_LIMIT=` (number) **default: 50**
+* `CPU_LIMIT=` (number) **default: 50**
+* `ENDPOINT_MONITOR=<enable endpoint monitoring>` (true|false) **default: false**
 * `ENDPOINT_URL=` (https://...)
+* `WEBHOOK=<enable sending messages to webhooks>` (true|false) **default: false**
 * `WEBHOOK_TOKEN=`
 * `WEBHOOK_URL=`
 * `WEBHOOK_ORIGIN=<the name displayed on the wehook as the source of the message>`
-* `INTERVAL=<the wait in seconds between logs, to avoid spam>` (number) default:3600
+* `INTERVAL=<the wait in seconds between logs, to avoid spam>` (number) **default:1800**
 
-### Required
+## Required
 
 The resource must be mounted  
 ```console
