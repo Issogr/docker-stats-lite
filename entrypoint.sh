@@ -52,6 +52,7 @@ actions_timestamp() {
     ;;
   "log")
     LOG_TRIGGER_TIMESTAMP=$(date +%s)
+    PRIORITY=false
     ;;
   *)
     echo "unknown"
@@ -87,6 +88,5 @@ while true; do
     actions_timestamp log
     log
   fi
-  PRIORITY=false
   sleep 15
 done
