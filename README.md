@@ -13,7 +13,8 @@ You can specify the following variables:
 * `WEBHOOK_TOKEN=`
 * `WEBHOOK_URL=`
 * `WEBHOOK_ORIGIN=<the name displayed on the wehook as the source of the message>`
-* `INTERVAL=<the wait in seconds between logs, to avoid spam>` (number) **default:1800**
+* `INTERVAL=<the sleep interval between every check>` (number) **default:900**
+* `FAST_INTERVAL=<reduce to 60 seconds interval check but after 10 logs stop sending message to avoid spam and wait INTERVAL value >` (true|false) **default:true**
 
 ## Required
 
