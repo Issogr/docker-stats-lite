@@ -73,6 +73,6 @@ while true; do
     sleep "$INTERVAL"
     FAST_INTERVAL_LIMIT=0
   elif [ $FAST_INTERVAL = true ]; then
-    sleep "$FAST_INTERVAL"
+    sleep 60
   fi
 done
